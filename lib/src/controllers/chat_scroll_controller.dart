@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 class ChatScrollController {
   ChatScrollController({
@@ -17,33 +18,30 @@ class ChatScrollController {
 
   bool _needsScrollToBottom = false;
 
-  /// Call after inserting a user message at messages[0].
-  /// Always starts a fresh exchange (resets count to 1).
   void onNewUserMessage() {
-    // Start a fresh exchange with just this user message.
     _exchangeCount = 1;
     _isUserScrolledUp = false;
     showScrollToBottom.value = false;
     _needsScrollToBottom = true;
+    // Schedule jump after the next 2 frames (layout needs to settle with new exchange).
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (scrollController.hasClients) {
+          scrollController.jumpTo(0);
+        }
+      });
+    });
   }
 
-  /// Call after inserting an empty AI response message at messages[0].
   void onAIResponseStarted() {
     _exchangeCount += 1;
     _needsScrollToBottom = !_isUserScrolledUp;
   }
 
-  /// Call after each streaming token update to messages[0].
-  void onNewAIContent() {
-    // Nothing needed — padding recalc + offset 0 handles it.
-  }
+  void onNewAIContent() {}
 
-  /// Call when AI response is complete.
-  void onAIResponseComplete() {
-    // Don't reset exchange count — layout should persist.
-  }
+  void onAIResponseComplete() {}
 
-  /// Smooth scroll to bottom (for the button).
   void scrollToBottom() {
     if (!scrollController.hasClients) return;
     scrollController.animateTo(
@@ -55,13 +53,11 @@ class ChatScrollController {
     showScrollToBottom.value = false;
   }
 
-  /// Jump to bottom instantly (for after sending).
   void jumpToBottom() {
     if (!scrollController.hasClients) return;
     scrollController.jumpTo(0);
   }
 
-  /// Returns true if a scroll-to-bottom is pending.
   bool consumeScrollToBottom() {
     if (_needsScrollToBottom) {
       _needsScrollToBottom = false;
@@ -70,7 +66,6 @@ class ChatScrollController {
     return false;
   }
 
-  /// Handle user scroll notifications from NotificationListener.
   void handleUserScroll(UserScrollNotification notification) {
     if (!scrollController.hasClients) return;
     final offset = scrollController.offset;
@@ -87,7 +82,6 @@ class ChatScrollController {
     }
   }
 
-  /// Handle general scroll notifications (for fling-to-bottom detection).
   void handleScrollEnd() {
     if (!scrollController.hasClients) return;
     final offset = scrollController.offset;

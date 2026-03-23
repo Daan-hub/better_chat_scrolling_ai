@@ -5,14 +5,14 @@
       "name": "Example App",
       "request": "launch",
       "type": "dart",
-      "program": "example/lib/main.dart",
+      "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/example"
     },
     {
       "name": "Example App (Profile)",
       "request": "launch",
       "type": "dart",
-      "program": "example/lib/main.dart",
+      "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/example",
       "flutterMode": "profile"
     }
