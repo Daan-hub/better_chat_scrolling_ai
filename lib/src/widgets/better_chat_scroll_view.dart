@@ -89,6 +89,7 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     ? ListView.separated(
                         reverse: true,
                         controller: _ctrl.scrollController,
+                        physics: const ClampingScrollPhysics(),
                         padding: widget.padding,
                         itemCount: itemCount,
                         itemBuilder: _buildItem,
@@ -99,6 +100,7 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     : ListView.builder(
                         reverse: true,
                         controller: _ctrl.scrollController,
+                        physics: const ClampingScrollPhysics(),
                         padding: widget.padding,
                         itemCount: itemCount,
                         itemBuilder: _buildItem,
@@ -145,18 +147,21 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
         minHeight -= widget.padding!.vertical;
       }
 
-      return ConstrainedBox(
-        constraints: BoxConstraints(minHeight: minHeight),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Exchange messages: oldest first (user msg) → newest last (AI response)
-            for (int i = exchangeCount - 1; i >= 0; i--) ...[
-              if (i < exchangeCount - 1 && widget.separatorBuilder != null) widget.separatorBuilder!(context, 0),
-              widget.messageBuilder(context, widget.messages[i], i),
+      // Fixed-height container: parent ListView sees no height change = zero movement.
+      // Inner SingleChildScrollView lets user manually scroll long responses.
+      return SizedBox(
+        height: minHeight,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = exchangeCount - 1; i >= 0; i--) ...[
+                if (i < exchangeCount - 1 && widget.separatorBuilder != null)
+                  widget.separatorBuilder!(context, 0),
+                widget.messageBuilder(context, widget.messages[i], i),
+              ],
             ],
-          ],
+          ),
         ),
       );
     }
