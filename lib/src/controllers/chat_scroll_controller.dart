@@ -60,7 +60,11 @@ class ChatScrollController {
   }
 
   void onAIResponseComplete() {
-    _exchangeCount = 0;
+    // Don't reset _exchangeCount here. The exchange group stays visible
+    // (user msg at top, AI response below, padding fills the rest).
+    // This prevents layout jumps when the response finishes or when
+    // follow-up content (e.g. suggested questions) loads in afterwards.
+    // The exchange is naturally replaced when onNewUserMessage() is called.
   }
 
   /// Called by [BetterChatScrollView] on each build to keep item count in sync.
