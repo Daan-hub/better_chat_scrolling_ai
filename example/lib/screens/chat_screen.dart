@@ -33,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _chatScrollController = ChatScrollController();
+    _chatScrollController = ChatScrollController()..init();
     _textController = TextEditingController();
     // Copy initial messages (newest first).
     _messages = List.of(widget.initialMessages);
