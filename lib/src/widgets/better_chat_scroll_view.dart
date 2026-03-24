@@ -89,7 +89,9 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     ? ListView.separated(
                         reverse: true,
                         controller: _ctrl.scrollController,
-                        physics: const ClampingScrollPhysics(),
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                         padding: widget.padding,
                         itemCount: itemCount,
                         itemBuilder: _buildItem,
@@ -100,7 +102,9 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     : ListView.builder(
                         reverse: true,
                         controller: _ctrl.scrollController,
-                        physics: const ClampingScrollPhysics(),
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                         padding: widget.padding,
                         itemCount: itemCount,
                         itemBuilder: _buildItem,
