@@ -10,17 +10,8 @@ class BetterChatScrollView<T> extends StatefulWidget {
       messageBuilder;
   final ChatScrollController controller;
 
-  /// Custom scroll-to-bottom button widget.
-  /// Receives the [VoidCallback] to trigger scrolling.
+  /// Custom scroll-to-bottom button builder. Receives the `onPressed` callback.
   /// If null, the default [ScrollToBottomButton] is used.
-  ///
-  /// Example:
-  /// ```dart
-  /// scrollToBottomBuilder: (onPressed) => FloatingActionButton.small(
-  ///   onPressed: onPressed,
-  ///   child: Icon(Icons.arrow_downward),
-  /// ),
-  /// ```
   final Widget Function(VoidCallback onPressed)? scrollToBottomBuilder;
 
   /// Horizontal alignment of the scroll-to-bottom button.
@@ -166,8 +157,11 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
     int itemCount,
   ) {
     // Trailing anchor (always the last item).
+    // Uses 1px height so ItemPositionsListener always reports it,
+    // even when slightly off-screen. A 0-height item gets dropped
+    // from position reports, breaking the threshold check.
     if (index == itemCount - 1) {
-      return const SizedBox.shrink();
+      return const SizedBox(height: 1);
     }
 
     // Exchange group (second-to-last real item, when exchange is active).

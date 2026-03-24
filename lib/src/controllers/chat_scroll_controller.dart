@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -31,16 +33,14 @@ class ChatScrollController {
   bool _isProgrammaticScroll = false;
   bool _autoFollow = false;
   bool _isReanchoring = false;
-
-  /// True after scrollToBottom/jumpToBottom targeted the anchor.
-  /// When the user next touches the screen, we re-anchor to a visible
-  /// content item to prevent jitter from ScrollablePositionedList
-  /// maintaining the anchor's position as content grows.
   bool _anchoredToBottom = false;
 
   double _viewportHeight = 0;
   double _bottomPadding = 0;
   double _scrollToBottomThreshold = 50.0;
+
+  /// Debounce timer to prevent brief flashes of the scroll-to-bottom button.
+  Timer? _showButtonDebounce;
 
   void init() {
     itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
@@ -54,6 +54,22 @@ class ChatScrollController {
     _viewportHeight = viewportHeight;
     _bottomPadding = bottomPadding;
     _scrollToBottomThreshold = scrollToBottomThreshold;
+  }
+
+  /// Debounced show: only shows button after 150ms of consistently needing
+  /// to show. Hides are always instant. Prevents brief flashes on send.
+  void _setShowButton(bool shouldShow) {
+    if (shouldShow) {
+      // Debounce: only show after 150ms
+      _showButtonDebounce ??= Timer(const Duration(milliseconds: 150), () {
+        _showButtonDebounce = null;
+        showScrollToBottom.value = true;
+      });
+    } else {
+      _showButtonDebounce?.cancel();
+      _showButtonDebounce = null;
+      showScrollToBottom.value = false;
+    }
   }
 
   void _onPositionsChanged() {
@@ -71,11 +87,10 @@ class ChatScrollController {
     );
 
     final shouldShow = !anchorNearBottom;
-    showScrollToBottom.value = shouldShow;
+    _setShowButton(shouldShow);
 
     if (shouldShow && _autoFollow) {
       _autoFollow = false;
-      // _anchoredToBottom stays true — resolved on next user touch
     }
   }
 
@@ -86,7 +101,7 @@ class ChatScrollController {
     exchangeCountNotifier.value = 1 + _pendingAICount;
     _pendingAICount = 0;
     _isProgrammaticScroll = true;
-    showScrollToBottom.value = false;
+    _setShowButton(false);
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -115,7 +130,6 @@ class ChatScrollController {
   }
 
   /// Called by the widget on user touch (onPointerDown).
-  /// Cancels auto-follow AND re-anchors if the positioned item is the anchor.
   void onUserTouch() {
     _autoFollow = false;
     if (_anchoredToBottom) {
@@ -125,7 +139,6 @@ class ChatScrollController {
   }
 
   /// Called by the widget on user drag (onPointerMove).
-  /// Safety net to cancel auto-follow if onPointerDown was missed.
   void cancelAutoFollow() {
     _autoFollow = false;
   }
@@ -157,9 +170,6 @@ class ChatScrollController {
     return 1.0;
   }
 
-  /// Re-anchor the scroll position to the item closest to the viewport top.
-  /// Visually a no-op, but changes ScrollablePositionedList's internal
-  /// positioned item from the anchor to a content item.
   void _reanchorToVisibleItem() {
     if (!itemScrollController.isAttached) return;
 
@@ -192,7 +202,6 @@ class ChatScrollController {
     }
   }
 
-  /// Small pixel-level adjustment to keep anchor at viewport bottom.
   void _adjustScrollToBottom() {
     if (_viewportHeight <= 0) return;
 
@@ -210,7 +219,6 @@ class ChatScrollController {
     }
 
     if (anchorPos == null) {
-      // Anchor not visible. Jump to bottom.
       itemScrollController.jumpTo(
         index: _totalItemCount - 1,
         alignment: _bottomAlignment,
@@ -228,16 +236,15 @@ class ChatScrollController {
       offset: delta,
       duration: const Duration(milliseconds: 16),
     );
-    showScrollToBottom.value = false;
+    _setShowButton(false);
   }
 
-  /// Smoothly scrolls to the bottom of the chat (300ms animation).
   Future<void> scrollToBottom() async {
     if (!itemScrollController.isAttached || _totalItemCount <= 1) return;
 
     _isProgrammaticScroll = true;
     _anchoredToBottom = true;
-    showScrollToBottom.value = false;
+    _setShowButton(false);
 
     if (_inExchange && autoFollowOnScrollToBottom) {
       _autoFollow = true;
@@ -254,7 +261,6 @@ class ChatScrollController {
     _onPositionsChanged();
   }
 
-  /// Instantly jumps to the bottom of the chat.
   void jumpToBottom() {
     if (!itemScrollController.isAttached || _totalItemCount <= 1) return;
     _anchoredToBottom = true;
@@ -262,10 +268,11 @@ class ChatScrollController {
       index: _totalItemCount - 1,
       alignment: _bottomAlignment,
     );
-    showScrollToBottom.value = false;
+    _setShowButton(false);
   }
 
   void dispose() {
+    _showButtonDebounce?.cancel();
     itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     showScrollToBottom.dispose();
     exchangeCountNotifier.dispose();
