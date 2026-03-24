@@ -107,9 +107,12 @@ class ChatScrollController {
     _pendingExchangeJump = true;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (!itemScrollController.isAttached || _totalItemCount <= 1) {
-          // Leave _pendingExchangeJump=true so updateItemCount can retry
-          // when the item count catches up (async state managers).
+        if (!_pendingExchangeJump ||
+            !itemScrollController.isAttached ||
+            _totalItemCount <= 1) {
+          // If _pendingExchangeJump is false, updateItemCount already handled
+          // the jump — skip to avoid double-jump. Otherwise, leave the flag
+          // true so updateItemCount can retry when the item count catches up.
           _isProgrammaticScroll = _pendingExchangeJump;
           return;
         }

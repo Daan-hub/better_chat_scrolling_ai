@@ -1,3 +1,7 @@
+## 0.1.7
+
+- Fix double-jump when `onNewUserMessage()` is called on initial mount (e.g. `initState` + `postFrameCallback`)
+
 ## 0.1.6
 
 - Fix first message not scrolling to top in empty chats when using async state managers (Riverpod, Bloc, etc.)
