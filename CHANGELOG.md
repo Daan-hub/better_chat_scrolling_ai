@@ -1,3 +1,8 @@
+## 0.1.1
+
+- Fix layout jump when AI response completes or follow-up content loads
+- `onAIResponseComplete()` no longer resets exchange group — it persists until the next `onNewUserMessage()` call
+
 ## 0.1.0
 
 - Initial release
