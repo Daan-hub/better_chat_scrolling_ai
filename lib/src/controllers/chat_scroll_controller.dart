@@ -10,8 +10,17 @@ class ChatScrollController {
       ItemPositionsListener.create();
   final ValueNotifier<bool> showScrollToBottom = ValueNotifier(false);
 
-  int _exchangeCount = 0;
-  int get exchangeCount => _exchangeCount;
+  /// Notifier for the number of messages in the current exchange group.
+  /// The widget listens to this to rebuild when the exchange changes.
+  final ValueNotifier<int> exchangeCountNotifier = ValueNotifier(0);
+
+  int get exchangeCount => exchangeCountNotifier.value;
+
+  /// Whether we're inside an active exchange (between onNewUserMessage and onAIResponseComplete).
+  bool _inExchange = false;
+
+  /// Buffered AI response count for when onAIResponseStarted() fires before onNewUserMessage().
+  int _pendingAICount = 0;
 
   /// Total item count in the list (including trailing anchor).
   int _totalItemCount = 0;
@@ -35,7 +44,9 @@ class ChatScrollController {
   }
 
   void onNewUserMessage() {
-    _exchangeCount = 1;
+    _inExchange = true;
+    exchangeCountNotifier.value = 1 + _pendingAICount;
+    _pendingAICount = 0;
     showScrollToBottom.value = false;
 
     // Schedule jump after 2 frames (layout needs to settle with new exchange).
@@ -52,7 +63,12 @@ class ChatScrollController {
   }
 
   void onAIResponseStarted() {
-    _exchangeCount += 1;
+    if (_inExchange) {
+      exchangeCountNotifier.value = exchangeCountNotifier.value + 1;
+    } else {
+      // onNewUserMessage() hasn't fired yet — buffer this.
+      _pendingAICount += 1;
+    }
   }
 
   void onNewAIContent() {
@@ -60,11 +76,10 @@ class ChatScrollController {
   }
 
   void onAIResponseComplete() {
-    // Don't reset _exchangeCount here. The exchange group stays visible
-    // (user msg at top, AI response below, padding fills the rest).
-    // This prevents layout jumps when the response finishes or when
-    // follow-up content (e.g. suggested questions) loads in afterwards.
-    // The exchange is naturally replaced when onNewUserMessage() is called.
+    _inExchange = false;
+    _pendingAICount = 0;
+    // Keep exchangeCountNotifier.value for visual stability.
+    // The exchange group stays visible until the next onNewUserMessage().
   }
 
   /// Called by [BetterChatScrollView] on each build to keep item count in sync.
@@ -96,5 +111,6 @@ class ChatScrollController {
   void dispose() {
     itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     showScrollToBottom.dispose();
+    exchangeCountNotifier.dispose();
   }
 }

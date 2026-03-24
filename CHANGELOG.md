@@ -1,3 +1,11 @@
+## 0.1.2
+
+- Fix race condition when `onAIResponseStarted()` fires before `onNewUserMessage()`
+- Make `exchangeCount` reactive via `exchangeCountNotifier` (ValueNotifier) — widget now rebuilds automatically when exchange state changes
+- Add order-independent buffering: controller correctly handles any call order between user message and AI response events
+- Clamp exchange count to message list length for safety
+- Works correctly with provider-based state management (Riverpod, Bloc, etc.) — no longer requires `setState` to drive rebuilds
+
 ## 0.1.1
 
 - Fix layout jump when AI response completes or follow-up content loads

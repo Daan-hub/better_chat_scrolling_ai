@@ -37,60 +37,65 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final exchangeCount = _ctrl.exchangeCount;
-    final messageCount = widget.messages.length;
-    final regularCount = messageCount - exchangeCount;
-
-    // Items: regular messages + (exchange group if active) + trailing anchor.
-    final itemCount =
-        regularCount + (exchangeCount > 0 ? 1 : 0) + 1; // +1 for anchor
-    _ctrl.updateItemCount(itemCount);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         _viewportHeight = constraints.maxHeight;
 
-        return Stack(
-          children: [
-            ScrollablePositionedList.builder(
-              itemCount: itemCount,
-              itemScrollController: _ctrl.itemScrollController,
-              itemPositionsListener: _ctrl.itemPositionsListener,
-              // Start at trailing anchor with top at viewport bottom
-              // → all real messages fill above = chat starts at bottom.
-              initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
-              initialAlignment: itemCount > 1 ? 1.0 : 0.0,
-              padding: widget.padding,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              itemBuilder: (context, index) =>
-                  _buildItem(context, index, regularCount, exchangeCount, itemCount),
-            ),
-            Positioned(
-              bottom: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: _ctrl.showScrollToBottom,
-                  builder: (context, show, child) {
-                    return AnimatedOpacity(
-                      opacity: show ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: IgnorePointer(
-                        ignoring: !show,
-                        child: widget.scrollToBottomWidget ??
-                            ScrollToBottomButton(
-                              onPressed: _ctrl.scrollToBottom,
-                            ),
-                      ),
-                    );
-                  },
+        return ValueListenableBuilder<int>(
+          valueListenable: _ctrl.exchangeCountNotifier,
+          builder: (context, rawExchangeCount, _) {
+            final messageCount = widget.messages.length;
+            // Clamp to prevent negative regularCount if exchangeCount
+            // updates before the messages list does.
+            final exchangeCount = rawExchangeCount.clamp(0, messageCount);
+            final regularCount = messageCount - exchangeCount;
+
+            // Items: regular messages + (exchange group if active) + trailing anchor.
+            final itemCount =
+                regularCount + (exchangeCount > 0 ? 1 : 0) + 1;
+            _ctrl.updateItemCount(itemCount);
+
+            return Stack(
+              children: [
+                ScrollablePositionedList.builder(
+                  itemCount: itemCount,
+                  itemScrollController: _ctrl.itemScrollController,
+                  itemPositionsListener: _ctrl.itemPositionsListener,
+                  initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
+                  initialAlignment: itemCount > 1 ? 1.0 : 0.0,
+                  padding: widget.padding,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  itemBuilder: (context, index) => _buildItem(
+                      context, index, regularCount, exchangeCount, itemCount),
                 ),
-              ),
-            ),
-          ],
+                Positioned(
+                  bottom: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: _ctrl.showScrollToBottom,
+                      builder: (context, show, child) {
+                        return AnimatedOpacity(
+                          opacity: show ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: IgnorePointer(
+                            ignoring: !show,
+                            child: widget.scrollToBottomWidget ??
+                                ScrollToBottomButton(
+                                  onPressed: _ctrl.scrollToBottom,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
