@@ -1,8 +1,8 @@
 ## 0.1.4
 
-- Restore `scrollToBottomWidget` parameter for backward compatibility (alongside `scrollToBottomBuilder`)
 - Fix scroll-to-bottom threshold not working — anchor now 1px tall so `ItemPositionsListener` always reports it
 - Fix scroll-to-bottom button briefly flashing on send — debounce show by 150ms
+- Replace `scrollToBottomWidget` with `scrollToBottomBuilder` — builder receives the `onPressed` callback
 
 ## 0.1.3
 
