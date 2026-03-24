@@ -145,8 +145,8 @@ class ChatListScreen extends StatelessWidget {
       ],
     ),
     _ChatPreview(
-      title: 'New Conversation',
-      subtitle: 'Start chatting...',
+      title: 'Empty Chat',
+      subtitle: 'Start a fresh conversation',
       messages: [],
     ),
   ];

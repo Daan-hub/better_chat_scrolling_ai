@@ -113,15 +113,58 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: BetterChatScrollView<Message>(
-              messages: _messages,
-              controller: _chatScrollController,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              messageBuilder: (context, message, index) {
-                return MessageBubble(message: message);
-              },
-            ),
+            child: _messages.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 64,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No messages yet',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.5),
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Send a message to start the conversation',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.4),
+                              ),
+                        ),
+                      ],
+                    ),
+                  )
+                : BetterChatScrollView<Message>(
+                    messages: _messages,
+                    controller: _chatScrollController,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    messageBuilder: (context, message, index) {
+                      return MessageBubble(message: message);
+                    },
+                  ),
           ),
           ChatInputBar(
             controller: _textController,

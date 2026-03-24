@@ -1,3 +1,8 @@
+## 0.1.6
+
+- Fix first message not scrolling to top in empty chats when using async state managers (Riverpod, Bloc, etc.)
+- Add empty chat example with placeholder UI
+
 ## 0.1.5
 
 - Add Android platform support to example app

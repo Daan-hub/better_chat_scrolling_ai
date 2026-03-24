@@ -34,6 +34,7 @@ class ChatScrollController {
   bool _autoFollow = false;
   bool _isReanchoring = false;
   bool _anchoredToBottom = false;
+  bool _pendingExchangeJump = false;
 
   double _viewportHeight = 0;
   double _bottomPadding = 0;
@@ -103,12 +104,16 @@ class ChatScrollController {
     _isProgrammaticScroll = true;
     _setShowButton(false);
 
+    _pendingExchangeJump = true;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (!itemScrollController.isAttached || _totalItemCount <= 1) {
-          _isProgrammaticScroll = false;
+          // Leave _pendingExchangeJump=true so updateItemCount can retry
+          // when the item count catches up (async state managers).
+          _isProgrammaticScroll = _pendingExchangeJump;
           return;
         }
+        _pendingExchangeJump = false;
         final exchangeIndex = _totalItemCount - 2;
         if (exchangeIndex >= 0) {
           itemScrollController.jumpTo(index: exchangeIndex, alignment: 0.0);
@@ -157,10 +162,35 @@ class ChatScrollController {
     _inExchange = false;
     _pendingAICount = 0;
     _autoFollow = false;
+    _pendingExchangeJump = false;
   }
 
   void updateItemCount(int count) {
+    final prev = _totalItemCount;
     _totalItemCount = count;
+
+    // Handle async state managers (e.g. Riverpod) where onNewUserMessage()
+    // fires before the widget rebuilds with updated messages. The original
+    // post-frame jump bails out when _totalItemCount <= 1, so we retry here
+    // once the item count catches up.
+    if (_pendingExchangeJump && prev <= 1 && count > 1) {
+      _pendingExchangeJump = false;
+      _isProgrammaticScroll = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!itemScrollController.isAttached || _totalItemCount <= 1) {
+          _isProgrammaticScroll = false;
+          return;
+        }
+        final exchangeIndex = _totalItemCount - 2;
+        if (exchangeIndex >= 0) {
+          itemScrollController.jumpTo(index: exchangeIndex, alignment: 0.0);
+        }
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          _isProgrammaticScroll = false;
+          _onPositionsChanged();
+        });
+      });
+    }
   }
 
   double get _bottomAlignment {
