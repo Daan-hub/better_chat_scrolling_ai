@@ -9,7 +9,30 @@ class BetterChatScrollView<T> extends StatefulWidget {
   final Widget Function(BuildContext context, T message, int index)
       messageBuilder;
   final ChatScrollController controller;
-  final Widget? scrollToBottomWidget;
+
+  /// Custom scroll-to-bottom button widget.
+  /// Receives the [VoidCallback] to trigger scrolling.
+  /// If null, the default [ScrollToBottomButton] is used.
+  ///
+  /// Example:
+  /// ```dart
+  /// scrollToBottomBuilder: (onPressed) => FloatingActionButton.small(
+  ///   onPressed: onPressed,
+  ///   child: Icon(Icons.arrow_downward),
+  /// ),
+  /// ```
+  final Widget Function(VoidCallback onPressed)? scrollToBottomBuilder;
+
+  /// Horizontal alignment of the scroll-to-bottom button.
+  ///
+  /// Use [Alignment.centerLeft], [Alignment.center], or [Alignment.centerRight]
+  /// to position the button. Defaults to [Alignment.center].
+  final Alignment scrollToBottomAlignment;
+
+  /// Bottom offset of the scroll-to-bottom button from the bottom edge.
+  /// Defaults to 8.0.
+  final double scrollToBottomBottomOffset;
+
   final EdgeInsets? padding;
   final double scrollToBottomThreshold;
   final Widget Function(BuildContext context, int index)? separatorBuilder;
@@ -19,7 +42,9 @@ class BetterChatScrollView<T> extends StatefulWidget {
     required this.messages,
     required this.messageBuilder,
     required this.controller,
-    this.scrollToBottomWidget,
+    this.scrollToBottomBuilder,
+    this.scrollToBottomAlignment = Alignment.center,
+    this.scrollToBottomBottomOffset = 8.0,
     this.padding,
     this.scrollToBottomThreshold = 50.0,
     this.separatorBuilder,
@@ -35,11 +60,26 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
 
   ChatScrollController get _ctrl => widget.controller;
 
+  /// Compute the initial alignment that accounts for bottom padding,
+  /// so the list starts at the true bottom (matching scrollToBottom behavior).
+  double _initialAlignment(double viewportHeight) {
+    final bottomPadding = widget.padding?.bottom ?? 0;
+    if (viewportHeight > 0 && bottomPadding > 0) {
+      return 1.0 - (bottomPadding / viewportHeight);
+    }
+    return 1.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         _viewportHeight = constraints.maxHeight;
+        _ctrl.updateViewportInfo(
+          _viewportHeight,
+          widget.padding?.bottom ?? 0,
+          widget.scrollToBottomThreshold,
+        );
 
         return ValueListenableBuilder<int>(
           valueListenable: _ctrl.exchangeCountNotifier,
@@ -55,41 +95,58 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                 regularCount + (exchangeCount > 0 ? 1 : 0) + 1;
             _ctrl.updateItemCount(itemCount);
 
+            final initAlign = _initialAlignment(_viewportHeight);
+
             return Stack(
               children: [
-                ScrollablePositionedList.builder(
-                  itemCount: itemCount,
-                  itemScrollController: _ctrl.itemScrollController,
-                  itemPositionsListener: _ctrl.itemPositionsListener,
-                  initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
-                  initialAlignment: itemCount > 1 ? 1.0 : 0.0,
-                  padding: widget.padding,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
+                // Detect user touch/drag to disable auto-follow immediately.
+                // onPointerDown: cancel on first touch (before any movement)
+                // onPointerMove: safety net in case down was missed
+                // This prevents the flicker when the user scrolls up while
+                // auto-follow is active (jumpToBottom and user drag fighting).
+                Listener(
+                  onPointerDown: (_) => _ctrl.onUserTouch(),
+                  onPointerMove: (_) => _ctrl.cancelAutoFollow(),
+                  child: ScrollablePositionedList.builder(
+                    itemCount: itemCount,
+                    itemScrollController: _ctrl.itemScrollController,
+                    itemPositionsListener: _ctrl.itemPositionsListener,
+                    scrollOffsetController: _ctrl.scrollOffsetController,
+                    initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
+                    initialAlignment: itemCount > 1 ? initAlign : 0.0,
+                    padding: widget.padding,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    itemBuilder: (context, index) => _buildItem(
+                        context, index, regularCount, exchangeCount, itemCount),
                   ),
-                  itemBuilder: (context, index) => _buildItem(
-                      context, index, regularCount, exchangeCount, itemCount),
                 ),
                 Positioned(
-                  bottom: 8,
+                  bottom: widget.scrollToBottomBottomOffset,
                   left: 0,
                   right: 0,
-                  child: Center(
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: _ctrl.showScrollToBottom,
-                      builder: (context, show, child) {
-                        return AnimatedOpacity(
-                          opacity: show ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 200),
-                          child: IgnorePointer(
-                            ignoring: !show,
-                            child: widget.scrollToBottomWidget ??
-                                ScrollToBottomButton(
-                                  onPressed: _ctrl.scrollToBottom,
-                                ),
-                          ),
-                        );
-                      },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Align(
+                      alignment: widget.scrollToBottomAlignment,
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _ctrl.showScrollToBottom,
+                        builder: (context, show, child) {
+                          return AnimatedOpacity(
+                            opacity: show ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: IgnorePointer(
+                              ignoring: !show,
+                              child: widget.scrollToBottomBuilder
+                                      ?.call(_ctrl.scrollToBottom) ??
+                                  ScrollToBottomButton(
+                                    onPressed: _ctrl.scrollToBottom,
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

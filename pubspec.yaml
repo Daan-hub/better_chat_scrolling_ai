@@ -1,6 +1,6 @@
 name: better_chat_scrolling_ai
 description: Drop-in chat scrolling widget for AI chat apps with correct reversed-list behavior, dynamic padding, and auto-scroll management.
-version: 0.1.2
+version: 0.1.3
 homepage: https://github.com/Daan-hub/better_chat_scrolling_ai
 repository: https://github.com/Daan-hub/better_chat_scrolling_ai
 issue_tracker: https://github.com/Daan-hub/better_chat_scrolling_ai/issues

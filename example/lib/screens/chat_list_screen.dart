@@ -24,10 +24,29 @@ class ChatListScreen extends StatelessWidget {
       subtitle: 'What is the Widget tree?',
       messages: [
         Message(
+            id: '11',
+            role: MessageRole.assistant,
+            content: 'Hello! I\'d be happy to help you learn Flutter. What would you like to know?'),
+        Message(id: '10', role: MessageRole.user, content: 'What is the Widget tree?'),
+        Message(
+          id: '9',
+          role: MessageRole.user,
+          content: 'What is the Widget tree?',
+        ),
+        Message(
+          id: '8',
+          role: MessageRole.assistant,
+          content: 'Sure! You can hot reload by pressing "r" in your terminal when running with "flutter run".',
+        ),
+        Message(
+          id: '7',
+          role: MessageRole.user,
+          content: 'How can I refresh my app quickly during development?',
+        ),
+        Message(
           id: '6',
           role: MessageRole.assistant,
-          content:
-              'The Widget tree in Flutter is a hierarchical structure where each widget '
+          content: 'The Widget tree in Flutter is a hierarchical structure where each widget '
               'describes part of the user interface. Widgets are immutable blueprints — '
               'when state changes, Flutter rebuilds the affected widgets and efficiently '
               'updates only what changed on screen.',
@@ -36,8 +55,7 @@ class ChatListScreen extends StatelessWidget {
         Message(
           id: '4',
           role: MessageRole.assistant,
-          content:
-              'StatelessWidget is for static content that never changes. StatefulWidget '
+          content: 'StatelessWidget is for static content that never changes. StatefulWidget '
               'is for dynamic content that can change over time via setState().',
         ),
         Message(
@@ -58,10 +76,19 @@ class ChatListScreen extends StatelessWidget {
       subtitle: 'How do I optimize my app?',
       messages: [
         Message(
+          id: '6',
+          role: MessageRole.assistant,
+          content: 'Using the Flutter inspector can help you analyze rendering performance issues visually.',
+        ),
+        Message(
+          id: '5',
+          role: MessageRole.user,
+          content: 'Any tools for debugging performance issues?',
+        ),
+        Message(
           id: '4',
           role: MessageRole.assistant,
-          content:
-              'Here are key optimization tips:\n\n'
+          content: 'Here are key optimization tips:\n\n'
               '1. Use const constructors\n'
               '2. Use ListView.builder for long lists\n'
               '3. Minimize setState scope\n'
@@ -82,10 +109,19 @@ class ChatListScreen extends StatelessWidget {
       subtitle: 'Tell me about Riverpod',
       messages: [
         Message(
+          id: '4',
+          role: MessageRole.assistant,
+          content: 'You can also try Bloc or Provider for other state management approaches in Flutter.',
+        ),
+        Message(
+          id: '3',
+          role: MessageRole.user,
+          content: 'Are there other state management solutions?',
+        ),
+        Message(
           id: '2',
           role: MessageRole.assistant,
-          content:
-              'Riverpod is a reactive state management solution. It improves on Provider with '
+          content: 'Riverpod is a reactive state management solution. It improves on Provider with '
               'compile-time safety, no widget tree dependency, and better async support.',
         ),
         Message(id: '1', role: MessageRole.user, content: 'Tell me about Riverpod'),
@@ -95,6 +131,11 @@ class ChatListScreen extends StatelessWidget {
       title: 'Short Chat',
       subtitle: 'Hi!',
       messages: [
+        Message(
+          id: '3',
+          role: MessageRole.assistant,
+          content: 'Nice to meet you! 😊',
+        ),
         Message(
           id: '2',
           role: MessageRole.assistant,

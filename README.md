@@ -156,7 +156,9 @@ BetterChatScrollView<T>(
   // Optional
   padding: EdgeInsets?,             // list padding
   separatorBuilder: (ctx, i) => Widget, // space between messages
-  scrollToBottomWidget: Widget?,    // custom scroll-to-bottom button
+  scrollToBottomBuilder: (onPressed) => Widget, // custom button (receives callback)
+  scrollToBottomAlignment: Alignment, // button position (default: center)
+  scrollToBottomBottomOffset: double, // distance from bottom edge (default: 8)
   scrollToBottomThreshold: double,  // offset before button shows (default: 50)
 )
 ```
@@ -175,15 +177,21 @@ _messages.add(newMessage);
 
 ## Scroll-to-Bottom Button
 
-A default circular button with a down arrow appears when the user scrolls up more than 50px. You can replace it:
+A default circular button with a down arrow appears when the user scrolls up more than 50px. You can customize it:
 
 ```dart
 BetterChatScrollView<Message>(
-  scrollToBottomWidget: FloatingActionButton.small(
-    onPressed: _scrollController.scrollToBottom,
+  // Custom button design (onPressed is provided by the package)
+  scrollToBottomBuilder: (onPressed) => FloatingActionButton.small(
+    onPressed: onPressed,
     child: Icon(Icons.arrow_downward),
   ),
-  scrollToBottomThreshold: 100, // show after 100px of scrolling
+  // Position: bottomLeft, center (default), or bottomRight
+  scrollToBottomAlignment: Alignment.centerRight,
+  // Distance from bottom edge
+  scrollToBottomBottomOffset: 12,
+  // Show after 100px of scrolling (default: 50)
+  scrollToBottomThreshold: 100,
   // ...
 )
 ```
