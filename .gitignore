@@ -21,6 +21,13 @@ example/ios/Flutter/flutter_export_environment.sh
 example/ios/ServiceDefinitions.json
 example/ios/Runner/GeneratedPluginRegistrant.*
 
+# Android
+example/android/local.properties
+example/android/.gradle/
+example/android/app/build/
+example/android/build/
+example/android/gradle/wrapper/gradle-wrapper.jar
+
 # macOS
 example/macos/Flutter/GeneratedPluginRegistrant.swift
 example/macos/Flutter/ephemeral/

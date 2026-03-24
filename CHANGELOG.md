@@ -1,3 +1,7 @@
+## 0.1.5
+
+- Add Android platform support to example app
+
 ## 0.1.4
 
 - Fix scroll-to-bottom threshold not working — anchor now 1px tall so `ItemPositionsListener` always reports it
