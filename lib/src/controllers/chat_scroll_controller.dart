@@ -52,9 +52,28 @@ class ChatScrollController {
     double bottomPadding,
     double scrollToBottomThreshold,
   ) {
+    final previousHeight = _viewportHeight;
     _viewportHeight = viewportHeight;
     _bottomPadding = bottomPadding;
     _scrollToBottomThreshold = scrollToBottomThreshold;
+
+    // When viewport shrinks (keyboard opened), adjust scroll position
+    // to keep current content visible — but only if we were near the bottom
+    // and not in an active exchange (which has its own scroll handling).
+    if (previousHeight > 0 &&
+        viewportHeight < previousHeight &&
+        !_inExchange &&
+        itemScrollController.isAttached) {
+      final heightDelta = previousHeight - viewportHeight;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (itemScrollController.isAttached) {
+          scrollOffsetController.animateScroll(
+            offset: heightDelta,
+            duration: const Duration(milliseconds: 16),
+          );
+        }
+      });
+    }
   }
 
   /// Debounced show: only shows button after 150ms of consistently needing
