@@ -1,3 +1,9 @@
+## 0.2.3
+
+- Fix scroll-to-bottom button incorrectly showing when keyboard opens
+- Fix error when pressing scroll-to-bottom button multiple times rapidly — guard against concurrent scroll animations
+- Add `hideScrollToBottomWhenKeyboardOpen` parameter on `BetterChatScrollView` (default: true) — hides the button while the keyboard is visible
+
 ## 0.2.2
 
 - Animate scroll to exchange on new user message — replaces instant `jumpTo` with smooth `scrollTo`

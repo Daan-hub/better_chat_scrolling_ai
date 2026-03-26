@@ -79,6 +79,11 @@ class BetterChatScrollView<T> extends StatefulWidget {
   /// state internally via [ChatScrollController.showScrollToBottom]).
   final bool showScrollToBottomButton;
 
+  /// Whether to hide the scroll-to-bottom button when the keyboard is open.
+  /// Defaults to true. Set to false if you want the button to remain visible
+  /// when the keyboard is shown.
+  final bool hideScrollToBottomWhenKeyboardOpen;
+
   /// Duration of the scroll-to-bottom button fade animation. Defaults to 200ms.
   final Duration scrollToBottomFadeDuration;
 
@@ -98,6 +103,7 @@ class BetterChatScrollView<T> extends StatefulWidget {
     this.scrollToBottomThreshold = 50.0,
     this.separatorBuilder,
     this.showScrollToBottomButton = true,
+    this.hideScrollToBottomWhenKeyboardOpen = true,
     this.scrollToBottomFadeDuration = const Duration(milliseconds: 200),
     this.physics,
   });
@@ -190,11 +196,14 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                         child: ValueListenableBuilder<bool>(
                           valueListenable: _ctrl.showScrollToBottom,
                           builder: (context, show, child) {
+                            final visible = show &&
+                                !(widget.hideScrollToBottomWhenKeyboardOpen &&
+                                    _ctrl.keyboardOpen);
                             return AnimatedOpacity(
-                              opacity: show ? 1.0 : 0.0,
+                              opacity: visible ? 1.0 : 0.0,
                               duration: widget.scrollToBottomFadeDuration,
                               child: IgnorePointer(
-                                ignoring: !show,
+                                ignoring: !visible,
                                 child: widget.scrollToBottomBuilder
                                         ?.call(_ctrl.scrollToBottom) ??
                                     ScrollToBottomButton(

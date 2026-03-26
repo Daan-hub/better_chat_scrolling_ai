@@ -88,6 +88,11 @@ class ChatScrollController {
   bool _isReanchoring = false;
   bool _anchoredToBottom = false;
   bool _pendingExchangeJump = false;
+  bool _isScrollingToBottom = false;
+  bool _keyboardOpen = false;
+
+  /// Whether the keyboard is currently open (viewport shrank significantly).
+  bool get keyboardOpen => _keyboardOpen;
 
   double _viewportHeight = 0;
   double _bottomPadding = 0;
@@ -109,6 +114,18 @@ class ChatScrollController {
     _viewportHeight = viewportHeight;
     _bottomPadding = bottomPadding;
     _scrollToBottomThreshold = scrollToBottomThreshold;
+
+    // Detect keyboard open/close via significant viewport height changes.
+    if (previousHeight > 0) {
+      final delta = previousHeight - viewportHeight;
+      if (delta > 100) {
+        _keyboardOpen = true;
+        // Suppress button during keyboard transition.
+        _setShowButton(false);
+      } else if (delta < -100) {
+        _keyboardOpen = false;
+      }
+    }
 
     // When viewport shrinks (keyboard opened), adjust scroll position
     // to keep current content visible — but only if we were near the bottom
@@ -353,7 +370,9 @@ class ChatScrollController {
 
   Future<void> scrollToBottom() async {
     if (!itemScrollController.isAttached || _totalItemCount <= 1) return;
+    if (_isScrollingToBottom) return;
 
+    _isScrollingToBottom = true;
     _isProgrammaticScroll = true;
     _anchoredToBottom = true;
     _setShowButton(false);
@@ -362,15 +381,18 @@ class ChatScrollController {
       _autoFollow = true;
     }
 
-    await itemScrollController.scrollTo(
-      index: _totalItemCount - 1,
-      alignment: _bottomAlignment,
-      duration: scrollToBottomDuration,
-      curve: scrollToBottomCurve,
-    );
-
-    _isProgrammaticScroll = false;
-    _onPositionsChanged();
+    try {
+      await itemScrollController.scrollTo(
+        index: _totalItemCount - 1,
+        alignment: _bottomAlignment,
+        duration: scrollToBottomDuration,
+        curve: scrollToBottomCurve,
+      );
+    } finally {
+      _isScrollingToBottom = false;
+      _isProgrammaticScroll = false;
+      _onPositionsChanged();
+    }
   }
 
   void jumpToBottom() {
