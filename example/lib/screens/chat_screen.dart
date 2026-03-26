@@ -145,6 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 : BetterChatScrollView<Message>(
                     messages: _messages,
                     controller: _chatScrollController,
+                    hideScrollToBottomWhenKeyboardOpen: false,
                     scrollToBottomBottomOffset: 12,
                     scrollToBottomThreshold: 50,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
