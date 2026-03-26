@@ -17,6 +17,12 @@ class ChatScrollController {
   /// [scrollToBottomCurve] controls the animation curve when scrolling to the
   /// bottom. Defaults to [Curves.easeOut].
   ///
+  /// [scrollToExchangeDuration] controls the animation duration when scrolling
+  /// to the exchange after the user sends a message. Defaults to 300ms.
+  ///
+  /// [scrollToExchangeCurve] controls the animation curve when scrolling to the
+  /// exchange after the user sends a message. Defaults to [Curves.easeOut].
+  ///
   /// [showButtonDebounce] controls how long the scroll-to-bottom button waits
   /// before appearing, to prevent brief flashes. Defaults to 150ms.
   ///
@@ -29,6 +35,8 @@ class ChatScrollController {
     this.autoFollowOnScrollToBottom = true,
     this.scrollToBottomDuration = const Duration(milliseconds: 300),
     this.scrollToBottomCurve = Curves.easeOut,
+    this.scrollToExchangeDuration = const Duration(milliseconds: 300),
+    this.scrollToExchangeCurve = Curves.easeOut,
     this.showButtonDebounce = const Duration(milliseconds: 150),
     this.keyboardAdjustDuration = const Duration(milliseconds: 150),
     this.autoFollowDeltaThreshold = 0.5,
@@ -52,6 +60,12 @@ class ChatScrollController {
 
   /// Animation curve for the scroll-to-bottom action.
   final Curve scrollToBottomCurve;
+
+  /// Animation duration when scrolling to the exchange after the user sends a message.
+  final Duration scrollToExchangeDuration;
+
+  /// Animation curve when scrolling to the exchange after the user sends a message.
+  final Curve scrollToExchangeCurve;
 
   /// Debounce duration before the scroll-to-bottom button appears.
   final Duration showButtonDebounce;
@@ -179,14 +193,7 @@ class ChatScrollController {
           return;
         }
         _pendingExchangeJump = false;
-        final exchangeIndex = _totalItemCount - 2;
-        if (exchangeIndex >= 0) {
-          itemScrollController.jumpTo(index: exchangeIndex, alignment: 0.0);
-        }
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          _isProgrammaticScroll = false;
-          _onPositionsChanged();
-        });
+        _scrollToExchange();
       });
     });
   }
@@ -246,14 +253,7 @@ class ChatScrollController {
           _isProgrammaticScroll = false;
           return;
         }
-        final exchangeIndex = _totalItemCount - 2;
-        if (exchangeIndex >= 0) {
-          itemScrollController.jumpTo(index: exchangeIndex, alignment: 0.0);
-        }
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          _isProgrammaticScroll = false;
-          _onPositionsChanged();
-        });
+        _scrollToExchange();
       });
     }
   }
@@ -332,6 +332,19 @@ class ChatScrollController {
       duration: keyboardAdjustDuration,
     );
     _setShowButton(false);
+  }
+
+  Future<void> _scrollToExchange() async {
+    final exchangeIndex = _totalItemCount - 2;
+    if (exchangeIndex < 0) return;
+    await itemScrollController.scrollTo(
+      index: exchangeIndex,
+      alignment: 0.0,
+      duration: scrollToExchangeDuration,
+      curve: scrollToExchangeCurve,
+    );
+    _isProgrammaticScroll = false;
+    _onPositionsChanged();
   }
 
   Future<void> scrollToBottom() async {

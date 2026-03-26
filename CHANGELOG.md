@@ -1,3 +1,8 @@
+## 0.2.1
+
+- Animate scroll to exchange on new user message — replaces instant `jumpTo` with smooth `scrollTo`
+- Add configurable `scrollToExchangeDuration` and `scrollToExchangeCurve` on `ChatScrollController`
+
 ## 0.2.0
 
 - Fix `scrollToBottomThreshold` not working for large values — button now correctly respects threshold when anchor item is off-screen
