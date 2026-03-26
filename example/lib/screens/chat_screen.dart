@@ -33,7 +33,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _chatScrollController = ChatScrollController()..init();
+    _chatScrollController = ChatScrollController(
+      scrollToExchangeDuration: const Duration(milliseconds: 500),
+    )..init();
     _textController = TextEditingController();
     // Copy initial messages (newest first).
     _messages = List.of(widget.initialMessages);

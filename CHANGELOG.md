@@ -1,7 +1,8 @@
-## 0.2.1
+## 0.2.2
 
 - Animate scroll to exchange on new user message — replaces instant `jumpTo` with smooth `scrollTo`
 - Add configurable `scrollToExchangeDuration` and `scrollToExchangeCurve` on `ChatScrollController`
+- Fix overscroll bounce during animated exchange scroll with `BouncingScrollPhysics` — adaptive physics clamps overscroll during programmatic scrolls while preserving bounce for user scrolls
 
 ## 0.2.0
 

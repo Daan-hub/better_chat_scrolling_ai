@@ -80,6 +80,10 @@ class ChatScrollController {
   int _pendingAICount = 0;
   int _totalItemCount = 0;
   bool _isProgrammaticScroll = false;
+
+  /// Whether a programmatic scroll is in progress. Used by the widget to
+  /// switch to clamping physics during animated scrolls.
+  bool get isProgrammaticScroll => _isProgrammaticScroll;
   bool _autoFollow = false;
   bool _isReanchoring = false;
   bool _anchoredToBottom = false;

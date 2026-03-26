@@ -4,6 +4,52 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../controllers/chat_scroll_controller.dart';
 import 'scroll_to_bottom_button.dart';
 
+/// Scroll physics that clamps overscroll during programmatic scrolls
+/// (preventing BouncingScrollPhysics bounce at list edges) while
+/// preserving normal bounce behavior for user-initiated scrolls.
+class _AdaptiveScrollPhysics extends ScrollPhysics {
+  final bool Function() _shouldClamp;
+
+  const _AdaptiveScrollPhysics({
+    required bool Function() shouldClamp,
+    super.parent,
+  }) : _shouldClamp = shouldClamp;
+
+  @override
+  _AdaptiveScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _AdaptiveScrollPhysics(
+      shouldClamp: _shouldClamp,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (_shouldClamp()) {
+      // Clamping logic — prevent overscroll at both edges.
+      if (value < position.pixels &&
+          value < position.minScrollExtent) {
+        return value - position.minScrollExtent;
+      }
+      if (position.maxScrollExtent <= position.pixels &&
+          position.pixels < value) {
+        return value - position.maxScrollExtent;
+      }
+      if (value < position.minScrollExtent &&
+          position.minScrollExtent < position.pixels) {
+        return value - position.minScrollExtent;
+      }
+      if (position.pixels < position.maxScrollExtent &&
+          position.maxScrollExtent < value) {
+        return value - position.maxScrollExtent;
+      }
+      return 0.0;
+    }
+    // Default: allow overscroll (BouncingScrollPhysics behavior).
+    return 0.0;
+  }
+}
+
 class BetterChatScrollView<T> extends StatefulWidget {
   final List<T> messages;
   final Widget Function(BuildContext context, T message, int index)
@@ -121,10 +167,13 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
                     initialAlignment: itemCount > 1 ? initAlign : 0.0,
                     padding: widget.padding,
-                    physics: widget.physics ??
-                        const BouncingScrollPhysics(
-                          parent: AlwaysScrollableScrollPhysics(),
-                        ),
+                    physics: _AdaptiveScrollPhysics(
+                      shouldClamp: () => _ctrl.isProgrammaticScroll,
+                      parent: widget.physics ??
+                          const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
+                    ),
                     itemBuilder: (context, index) => _buildItem(
                         context, index, regularCount, exchangeCount, itemCount),
                   ),
