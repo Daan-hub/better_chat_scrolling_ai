@@ -121,35 +121,20 @@ class _ChatScreenState extends State<ChatScreen> {
                         Icon(
                           Icons.chat_bubble_outline,
                           size: 64,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.3),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No messages yet',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.5),
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                               ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Send a message to start the conversation',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.4),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                               ),
                         ),
                       ],
@@ -158,9 +143,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 : BetterChatScrollView<Message>(
                     messages: _messages,
                     controller: _chatScrollController,
+                    scrollToBottomBottomOffset: 12,
+                    scrollToBottomThreshold: 50,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     messageBuilder: (context, message, index) {
                       return MessageBubble(message: message);
                     },

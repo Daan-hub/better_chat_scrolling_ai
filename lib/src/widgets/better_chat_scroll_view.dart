@@ -20,13 +20,25 @@ class BetterChatScrollView<T> extends StatefulWidget {
   /// to position the button. Defaults to [Alignment.center].
   final Alignment scrollToBottomAlignment;
 
-  /// Bottom offset of the scroll-to-bottom button from the bottom edge.
-  /// Defaults to 8.0.
+  /// Padding between the scroll-to-bottom button and the bottom edge of the
+  /// chat view. Defaults to 8.0.
   final double scrollToBottomBottomOffset;
 
   final EdgeInsets? padding;
   final double scrollToBottomThreshold;
   final Widget Function(BuildContext context, int index)? separatorBuilder;
+
+  /// Whether to show the scroll-to-bottom button. Defaults to true.
+  /// When false, the button is never rendered (the controller still tracks
+  /// state internally via [ChatScrollController.showScrollToBottom]).
+  final bool showScrollToBottomButton;
+
+  /// Duration of the scroll-to-bottom button fade animation. Defaults to 200ms.
+  final Duration scrollToBottomFadeDuration;
+
+  /// Custom scroll physics for the list. Defaults to
+  /// `BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())`.
+  final ScrollPhysics? physics;
 
   const BetterChatScrollView({
     super.key,
@@ -39,6 +51,9 @@ class BetterChatScrollView<T> extends StatefulWidget {
     this.padding,
     this.scrollToBottomThreshold = 50.0,
     this.separatorBuilder,
+    this.showScrollToBottomButton = true,
+    this.scrollToBottomFadeDuration = const Duration(milliseconds: 200),
+    this.physics,
   });
 
   @override
@@ -106,41 +121,43 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
                     initialScrollIndex: itemCount > 1 ? itemCount - 1 : 0,
                     initialAlignment: itemCount > 1 ? initAlign : 0.0,
                     padding: widget.padding,
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
+                    physics: widget.physics ??
+                        const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                     itemBuilder: (context, index) => _buildItem(
                         context, index, regularCount, exchangeCount, itemCount),
                   ),
                 ),
-                Positioned(
-                  bottom: widget.scrollToBottomBottomOffset,
-                  left: 0,
-                  right: 0,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: widget.scrollToBottomAlignment,
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: _ctrl.showScrollToBottom,
-                        builder: (context, show, child) {
-                          return AnimatedOpacity(
-                            opacity: show ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 200),
-                            child: IgnorePointer(
-                              ignoring: !show,
-                              child: widget.scrollToBottomBuilder
-                                      ?.call(_ctrl.scrollToBottom) ??
-                                  ScrollToBottomButton(
-                                    onPressed: _ctrl.scrollToBottom,
-                                  ),
-                            ),
-                          );
-                        },
+                if (widget.showScrollToBottomButton)
+                  Positioned(
+                    bottom: widget.scrollToBottomBottomOffset,
+                    left: 0,
+                    right: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Align(
+                        alignment: widget.scrollToBottomAlignment,
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: _ctrl.showScrollToBottom,
+                          builder: (context, show, child) {
+                            return AnimatedOpacity(
+                              opacity: show ? 1.0 : 0.0,
+                              duration: widget.scrollToBottomFadeDuration,
+                              child: IgnorePointer(
+                                ignoring: !show,
+                                child: widget.scrollToBottomBuilder
+                                        ?.call(_ctrl.scrollToBottom) ??
+                                    ScrollToBottomButton(
+                                      onPressed: _ctrl.scrollToBottom,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -204,25 +221,11 @@ class _BetterChatScrollViewState<T> extends State<BetterChatScrollView<T>> {
       msgIndex,
     );
 
-    // Separator after each regular message (not the last one before exchange/anchor).
-    final isLastRegular = (exchangeCount > 0)
-        ? index == regularCount - 1
-        : index == regularCount - 1; // last regular before anchor
-    if (widget.separatorBuilder != null && !isLastRegular) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          messageWidget,
-          widget.separatorBuilder!(context, index),
-        ],
-      );
-    }
-
-    // Separator between last regular message and exchange group.
+    // Show separator after each regular message, except the very last one
+    // when there's no exchange group (since only the anchor follows it).
+    final isLastRegular = index == regularCount - 1;
     if (widget.separatorBuilder != null &&
-        isLastRegular &&
-        exchangeCount > 0) {
+        (!isLastRegular || exchangeCount > 0)) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

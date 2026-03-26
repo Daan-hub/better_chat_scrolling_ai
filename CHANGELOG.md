@@ -1,3 +1,18 @@
+## 0.2.0
+
+- Fix `scrollToBottomThreshold` not working for large values — button now correctly respects threshold when anchor item is off-screen
+- Fix keyboard viewport adjustment using near-instant 16ms animation — now uses configurable smooth 150ms transition
+- Fix auto-follow scroll using 16ms duration — now uses `Duration.zero` for explicit frame-synced tracking
+- Add `showScrollToBottomButton` toggle on `BetterChatScrollView` (default: true)
+- Add configurable `scrollToBottomDuration`, `scrollToBottomCurve`, `showButtonDebounce`, `keyboardAdjustDuration`, and `autoFollowDeltaThreshold` on `ChatScrollController`
+- Add configurable `scrollToBottomFadeDuration` and `physics` on `BetterChatScrollView`
+- Fix separator logic duplication in `_buildItem`
+- Remove unused `MeasureSize` widget
+
+## 0.1.8
+
+- Fix keyboard not pushing content up when viewing long messages in existing chats
+
 ## 0.1.7
 
 - Fix double-jump when `onNewUserMessage()` is called on initial mount (e.g. `initState` + `postFrameCallback`)

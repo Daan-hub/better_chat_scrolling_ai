@@ -10,8 +10,28 @@ class ChatScrollController {
   /// [autoFollowOnScrollToBottom] controls whether pressing the scroll-to-bottom
   /// button during AI streaming activates auto-follow mode (viewport sticks to
   /// the bottom as new content arrives). Defaults to true.
+  ///
+  /// [scrollToBottomDuration] controls the animation duration when scrolling to
+  /// the bottom. Defaults to 300ms.
+  ///
+  /// [scrollToBottomCurve] controls the animation curve when scrolling to the
+  /// bottom. Defaults to [Curves.easeOut].
+  ///
+  /// [showButtonDebounce] controls how long the scroll-to-bottom button waits
+  /// before appearing, to prevent brief flashes. Defaults to 150ms.
+  ///
+  /// [keyboardAdjustDuration] controls the animation duration when adjusting
+  /// scroll position after the keyboard opens. Defaults to 150ms.
+  ///
+  /// [autoFollowDeltaThreshold] is the minimum pixel delta before auto-follow
+  /// adjusts the scroll position. Defaults to 0.5.
   ChatScrollController({
     this.autoFollowOnScrollToBottom = true,
+    this.scrollToBottomDuration = const Duration(milliseconds: 300),
+    this.scrollToBottomCurve = Curves.easeOut,
+    this.showButtonDebounce = const Duration(milliseconds: 150),
+    this.keyboardAdjustDuration = const Duration(milliseconds: 150),
+    this.autoFollowDeltaThreshold = 0.5,
   });
 
   final ItemScrollController itemScrollController = ItemScrollController();
@@ -27,6 +47,21 @@ class ChatScrollController {
   /// Whether pressing scroll-to-bottom during streaming activates auto-follow.
   final bool autoFollowOnScrollToBottom;
 
+  /// Animation duration for the scroll-to-bottom action.
+  final Duration scrollToBottomDuration;
+
+  /// Animation curve for the scroll-to-bottom action.
+  final Curve scrollToBottomCurve;
+
+  /// Debounce duration before the scroll-to-bottom button appears.
+  final Duration showButtonDebounce;
+
+  /// Animation duration when adjusting scroll after keyboard opens.
+  final Duration keyboardAdjustDuration;
+
+  /// Minimum pixel delta before auto-follow adjusts scroll position.
+  final double autoFollowDeltaThreshold;
+
   bool _inExchange = false;
   int _pendingAICount = 0;
   int _totalItemCount = 0;
@@ -41,7 +76,7 @@ class ChatScrollController {
   double _scrollToBottomThreshold = 50.0;
 
   /// Debounce timer to prevent brief flashes of the scroll-to-bottom button.
-  Timer? _showButtonDebounce;
+  Timer? _showButtonDebounceTimer;
 
   void init() {
     itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
@@ -69,7 +104,7 @@ class ChatScrollController {
         if (itemScrollController.isAttached) {
           scrollOffsetController.animateScroll(
             offset: heightDelta,
-            duration: const Duration(milliseconds: 16),
+            duration: keyboardAdjustDuration,
           );
         }
       });
@@ -81,13 +116,13 @@ class ChatScrollController {
   void _setShowButton(bool shouldShow) {
     if (shouldShow) {
       // Debounce: only show after 150ms
-      _showButtonDebounce ??= Timer(const Duration(milliseconds: 150), () {
-        _showButtonDebounce = null;
+      _showButtonDebounceTimer ??= Timer(showButtonDebounce, () {
+        _showButtonDebounceTimer = null;
         showScrollToBottom.value = true;
       });
     } else {
-      _showButtonDebounce?.cancel();
-      _showButtonDebounce = null;
+      _showButtonDebounceTimer?.cancel();
+      _showButtonDebounceTimer = null;
       showScrollToBottom.value = false;
     }
   }
@@ -102,9 +137,25 @@ class ChatScrollController {
     final thresholdFraction =
         _viewportHeight > 0 ? _scrollToBottomThreshold / _viewportHeight : 0.0;
 
-    final anchorNearBottom = positions.any(
-      (p) => p.index == anchorIndex && p.itemLeadingEdge < 1.0 + thresholdFraction,
-    );
+    final anchorPositions = positions.where((p) => p.index == anchorIndex);
+    bool anchorNearBottom;
+    if (anchorPositions.isNotEmpty) {
+      // Anchor visible — use leading edge fraction check.
+      anchorNearBottom =
+          anchorPositions.first.itemLeadingEdge < 1.0 + thresholdFraction;
+    } else {
+      // Anchor off-screen — check the item right before the anchor.
+      // trailingEdge is in viewport fractions: 1.0 = viewport bottom,
+      // 3.0 = 2 viewports below. We're "near the bottom" when the
+      // pre-anchor item's trailing edge is close to 1.0 (within threshold).
+      final preAnchor = positions.where((p) => p.index == anchorIndex - 1);
+      if (preAnchor.isNotEmpty) {
+        anchorNearBottom =
+            preAnchor.first.itemTrailingEdge < 1.0 + thresholdFraction;
+      } else {
+        anchorNearBottom = false;
+      }
+    }
 
     final shouldShow = !anchorNearBottom;
     _setShowButton(shouldShow);
@@ -282,11 +333,11 @@ class ChatScrollController {
     final currentEdge = anchorPos.itemLeadingEdge;
     final delta = (currentEdge - targetEdge) * _viewportHeight;
 
-    if (delta.abs() < 0.5) return;
+    if (delta.abs() < autoFollowDeltaThreshold) return;
 
     scrollOffsetController.animateScroll(
       offset: delta,
-      duration: const Duration(milliseconds: 16),
+      duration: Duration.zero,
     );
     _setShowButton(false);
   }
@@ -305,8 +356,8 @@ class ChatScrollController {
     await itemScrollController.scrollTo(
       index: _totalItemCount - 1,
       alignment: _bottomAlignment,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      duration: scrollToBottomDuration,
+      curve: scrollToBottomCurve,
     );
 
     _isProgrammaticScroll = false;
@@ -324,7 +375,7 @@ class ChatScrollController {
   }
 
   void dispose() {
-    _showButtonDebounce?.cancel();
+    _showButtonDebounceTimer?.cancel();
     itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
     showScrollToBottom.dispose();
     exchangeCountNotifier.dispose();

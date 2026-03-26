@@ -43,7 +43,7 @@ The widget uses a `ConstrainedBox` exchange group that ensures the current user 
 
 ```yaml
 dependencies:
-  better_chat_scrolling_ai: ^0.1.0
+  better_chat_scrolling_ai: ^0.2.0
 ```
 
 ```dart
@@ -144,6 +144,21 @@ void _startAIResponse(String prompt) {
 | `jumpToBottom()` | Programmatically jump to bottom (instant) |
 | `dispose()` | In your widget's `dispose()` method |
 
+### Controller Configuration
+
+All timing and behavior parameters are configurable:
+
+```dart
+ChatScrollController(
+  autoFollowOnScrollToBottom: true,                       // default
+  scrollToBottomDuration: Duration(milliseconds: 300),    // scroll animation
+  scrollToBottomCurve: Curves.easeOut,                    // scroll curve
+  showButtonDebounce: Duration(milliseconds: 150),        // button show delay
+  keyboardAdjustDuration: Duration(milliseconds: 150),    // keyboard adjust animation
+  autoFollowDeltaThreshold: 0.5,                          // min px delta for auto-follow
+)
+```
+
 ## Widget Properties
 
 ```dart
@@ -160,6 +175,9 @@ BetterChatScrollView<T>(
   scrollToBottomAlignment: Alignment, // button position (default: center)
   scrollToBottomBottomOffset: double, // distance from bottom edge (default: 8)
   scrollToBottomThreshold: double,  // offset before button shows (default: 50)
+  showScrollToBottomButton: bool,  // toggle button on/off (default: true)
+  scrollToBottomFadeDuration: Duration, // button fade animation (default: 200ms)
+  physics: ScrollPhysics?,         // custom scroll physics (default: BouncingScrollPhysics)
 )
 ```
 
