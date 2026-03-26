@@ -2,7 +2,7 @@
 
 - Fix `scrollToBottomThreshold` not working for large values — button now correctly respects threshold when anchor item is off-screen
 - Fix keyboard viewport adjustment using near-instant 16ms animation — now uses configurable smooth 150ms transition
-- Fix auto-follow scroll using 16ms duration — now uses `Duration.zero` for explicit frame-synced tracking
+- Document auto-follow 16ms as intentional — minimum valid duration for frame-synced tracking (`animateScroll` requires `> Duration.zero`)
 - Add `showScrollToBottomButton` toggle on `BetterChatScrollView` (default: true)
 - Add configurable `scrollToBottomDuration`, `scrollToBottomCurve`, `showButtonDebounce`, `keyboardAdjustDuration`, and `autoFollowDeltaThreshold` on `ChatScrollController`
 - Add configurable `scrollToBottomFadeDuration` and `physics` on `BetterChatScrollView`

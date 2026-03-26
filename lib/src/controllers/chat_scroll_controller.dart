@@ -95,10 +95,7 @@ class ChatScrollController {
     // When viewport shrinks (keyboard opened), adjust scroll position
     // to keep current content visible — but only if we were near the bottom
     // and not in an active exchange (which has its own scroll handling).
-    if (previousHeight > 0 &&
-        viewportHeight < previousHeight &&
-        !_inExchange &&
-        itemScrollController.isAttached) {
+    if (previousHeight > 0 && viewportHeight < previousHeight && !_inExchange && itemScrollController.isAttached) {
       final heightDelta = previousHeight - viewportHeight;
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (itemScrollController.isAttached) {
@@ -134,15 +131,13 @@ class ChatScrollController {
     if (positions.isEmpty) return;
 
     final anchorIndex = _totalItemCount - 1;
-    final thresholdFraction =
-        _viewportHeight > 0 ? _scrollToBottomThreshold / _viewportHeight : 0.0;
+    final thresholdFraction = _viewportHeight > 0 ? _scrollToBottomThreshold / _viewportHeight : 0.0;
 
     final anchorPositions = positions.where((p) => p.index == anchorIndex);
     bool anchorNearBottom;
     if (anchorPositions.isNotEmpty) {
       // Anchor visible — use leading edge fraction check.
-      anchorNearBottom =
-          anchorPositions.first.itemLeadingEdge < 1.0 + thresholdFraction;
+      anchorNearBottom = anchorPositions.first.itemLeadingEdge < 1.0 + thresholdFraction;
     } else {
       // Anchor off-screen — check the item right before the anchor.
       // trailingEdge is in viewport fractions: 1.0 = viewport bottom,
@@ -150,8 +145,7 @@ class ChatScrollController {
       // pre-anchor item's trailing edge is close to 1.0 (within threshold).
       final preAnchor = positions.where((p) => p.index == anchorIndex - 1);
       if (preAnchor.isNotEmpty) {
-        anchorNearBottom =
-            preAnchor.first.itemTrailingEdge < 1.0 + thresholdFraction;
+        anchorNearBottom = preAnchor.first.itemTrailingEdge < 1.0 + thresholdFraction;
       } else {
         anchorNearBottom = false;
       }
@@ -177,9 +171,7 @@ class ChatScrollController {
     _pendingExchangeJump = true;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (!_pendingExchangeJump ||
-            !itemScrollController.isAttached ||
-            _totalItemCount <= 1) {
+        if (!_pendingExchangeJump || !itemScrollController.isAttached || _totalItemCount <= 1) {
           // If _pendingExchangeJump is false, updateItemCount already handled
           // the jump — skip to avoid double-jump. Otherwise, leave the flag
           // true so updateItemCount can retry when the item count catches up.
@@ -337,7 +329,7 @@ class ChatScrollController {
 
     scrollOffsetController.animateScroll(
       offset: delta,
-      duration: Duration.zero,
+      duration: keyboardAdjustDuration,
     );
     _setShowButton(false);
   }
